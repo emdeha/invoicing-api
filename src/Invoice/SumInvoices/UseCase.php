@@ -14,21 +14,25 @@ class UseCase
     {
         $sumPerCustomer = [];
         foreach ($invoiceLines as $invoice) {
-            $sumPerCustomer[$invoice->customer] = 0;
-        }
-        foreach ($invoiceLines as $invoice) {
-            $sumPerCustomer[$invoice->customer] += UseCase::calculateInvoiceLine(
+            $invoiceLineSum = UseCase::calculateInvoiceLine(
                 $invoice,
                 $exchangeRates,
                 $outputCurrency
             );
+            $parentDocument = $invoice->parentDocument ?: $invoice->documentNumber;
+
+            if (empty($sumPerCustomer[$invoice->customer])) {
+                $sumPerCustomer[$invoice->customer] = new CustomerSum($invoice->customer);
+            }
+
+            $sumPerCustomer[$invoice->customer]->addToDocumentSum($parentDocument, $invoiceLineSum);
         }
 
         $customerSums = [];
-        foreach ($sumPerCustomer as $customer => $sum) {
-            $sum /= ExchangeRate::getRateForCurrency($outputCurrency, $exchangeRates);
-            $sum = round($sum, 2);
-            array_push($customerSums, new CustomerSum($customer, $sum));
+        foreach ($sumPerCustomer as $customerSum) {
+            $customerSum->convertDocumentSumsToOutputRate($outputCurrency, $exchangeRates);
+            $customerSum->roundDocumentSums();
+            array_push($customerSums, $customerSum);
         }
 
         return $customerSums;

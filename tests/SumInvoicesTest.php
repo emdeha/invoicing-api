@@ -18,12 +18,11 @@ final class SumInvoicesTest extends TestCase
 
     /*
      * TODO:
+     *  * test filtering by VAT number
      *  * test whether the currency is valid
      *  * test currency calculation
      *  * test missing parent
-     *  * test multiple invoices
      *  * validate vat and document number
-     *  * test filtering by VAT number
      */
     public function testSumsOneInvoice(): void
     {
@@ -39,7 +38,8 @@ final class SumInvoicesTest extends TestCase
         $this->assertCount(1, $sum);
 
         $this->assertEquals($sum[0]->customer, "Vendor 1");
-        $this->assertEquals($sum[0]->sum, 400);
+        $this->assertEquals($sum[0]->documentSums[0]->documentNumber, "1000000257");
+        $this->assertEquals($sum[0]->documentSums[0]->sum, 400);
     }
 
     public function testSumsManyInvoices(): void
@@ -64,13 +64,24 @@ final class SumInvoicesTest extends TestCase
         $sum = SumInvoices\UseCase::do($invoiceList, $currencyList, $outputCurrency);
         $this->assertCount(3, $sum);
 
-        $this->assertEquals($sum[0]->customer, "Vendor 1");
-        $this->assertEquals($sum[0]->sum, 2208.09);
+        $vendorOne = $sum[0];
+        $this->assertEquals($vendorOne->customer, "Vendor 1");
+        $this->assertCount(2, $vendorOne->documentSums);
+        $this->assertEquals($vendorOne->documentSums[0]->documentNumber, "1000000257");
+        $this->assertEquals($vendorOne->documentSums[0]->sum, 385.76);
+        $this->assertEquals($vendorOne->documentSums[1]->documentNumber, "1000000264");
+        $this->assertEquals($vendorOne->documentSums[1]->sum, 1822.32);
 
-        $this->assertEquals($sum[1]->customer, "Vendor 2");
-        $this->assertEquals($sum[1]->sum, 800.23);
+        $vendorTwo = $sum[1];
+        $this->assertEquals($vendorTwo->customer, "Vendor 2");
+        $this->assertCount(1, $vendorTwo->documentSums);
+        $this->assertEquals($vendorTwo->documentSums[0]->documentNumber, "1000000258");
+        $this->assertEquals($vendorTwo->documentSums[0]->sum, 800.23);
 
-        $this->assertEquals($sum[2]->customer, "Vendor 3");
-        $this->assertEquals($sum[2]->sum, 1413.90);
+        $vendorThree = $sum[2];
+        $this->assertCount(1, $vendorThree->documentSums);
+        $this->assertEquals($vendorThree->customer, "Vendor 3");
+        $this->assertEquals($vendorThree->documentSums[0]->documentNumber, "1000000259");
+        $this->assertEquals($vendorThree->documentSums[0]->sum, 1413.90);
     }
 }
