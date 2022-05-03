@@ -16,6 +16,7 @@ class UseCase
         $invoiceLines = UseCase::filterByVatNumber($vatNumber, $invoiceLines);
 
         UseCase::validateParentsExist($invoiceLines);
+        UseCase::validateCurrenciesAreAccepted($invoiceLines, $exchangeRates);
 
         $sumPerCustomer = [];
         foreach ($invoiceLines as $invoice) {
@@ -91,6 +92,20 @@ class UseCase
             if ($line->type !== TYPE_INVOICE &&
                 empty($parentDocumentNumbers[$line->parentDocument])) {
                 throw new MissingParentException();
+            }
+        }
+    }
+
+    private static function validateCurrenciesAreAccepted($invoiceLines, $exchangeRates): void
+    {
+        $acceptedCurrencies = [];
+        foreach ($exchangeRates as $rate) {
+            $acceptedCurrencies[$rate->currency] = true;
+        }
+
+        foreach ($invoiceLines as $line) {
+            if (empty($acceptedCurrencies[$line->currency])) {
+                throw new MissingCurrencyException();
             }
         }
     }
