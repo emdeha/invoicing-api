@@ -19,17 +19,65 @@ class View
 
     public function registerHandlers()
     {
-        $this->handler->post('/', sumInvoicesHandler);
+        $this->handler->post('/', array($this, 'sumInvoicesHandler'));
     }
 
-    private function sumInvoicesHandler(Request $request, Response $response, $args)
+    public function sumInvoicesHandler(Request $request, Response $response, $args)
     {
-        $uploadFiles = $request->getUploadedFiles();
-        $dataFile = $uploadFiles['data'];
+        $csvFile = $request->getUploadedFiles()['csvFile'];
+        $invoiceLines = CsvParser::parseToInvoiceLines($csvFile->getStream()->detach());
 
-        $invoiceLines = CsvParser::parseToInvoiceLines($dataFile->getStream());
+        $currencyData = $request->getUploadedFiles()['currencyData']->getStream()->__toString();
+        $requestData = json_decode($currencyData);
 
-        $response->getBody()->write(var_dump($invoiceLines) . "\n");
+        $exchangeRates = View::getExchangeRatesFromCurrencyData($requestData);
+        $outputCurrency = View::getOutputCurrencyFromCurrencyData($requestData);
+        $vatNumber = View::getVatNumberFromCurrencyData($requestData);
+
+        $customerSum = SumInvoices\UseCase::do(
+            $invoiceLines,
+            $exchangeRates,
+            $outputCurrency,
+            $vatNumber
+        );
+
+        $response->getBody()->write(json_encode($customerSum) . "\n");
+
         return $response;
     }
+
+    private static function getExchangeRatesFromCurrencyData($requestData)
+    {
+        if (!array_key_exists('exchangeRates', $requestData)) {
+            throw new InvalidRequestException();
+        }
+
+        $exchangeRates = [];
+        foreach ($requestData->exchangeRates as $currency => $rate) {
+            array_push($exchangeRates, new SumInvoices\ExchangeRate($currency, $rate));
+        }
+        return $exchangeRates;
+    }
+
+    private static function getOutputCurrencyFromCurrencyData($requestData)
+    {
+        if (!array_key_exists('outputCurrency', $requestData)) {
+            throw new InvalidRequestException();
+        }
+
+        return $requestData->outputCurrency;
+    }
+
+    private static function getVatNumberFromCurrencyData($requestData)
+    {
+        if (!array_key_exists('vatNumber', $requestData)) {
+            return null;
+        }
+
+        return $requestData->vatNumber;
+    }
 }
+
+class InvalidRequestException extends \Exception
+{
+};
