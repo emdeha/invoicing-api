@@ -1,0 +1,14 @@
+{
+  "name": "emdeha/invoicing-api",
+  "type": "standard",
+  "description": "An API for summing invoices",
+  "homepage": "https://github.com/emdeha/invoicing-api",
+  "license": "MIT License",
+  "bin": ["bin/main"],
+  "require": {
+    "monolog/monolog": "^2.5"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9"
+  }
+}
