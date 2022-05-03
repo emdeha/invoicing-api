@@ -8,3 +8,6 @@ run:
 
 test:
 	./vendor/bin/phpunit tests
+
+cover:
+	phpdbg -qrr ./vendor/bin/phpunit --coverage-text tests
