@@ -9,9 +9,12 @@ class UseCase
     public static function do(
         $invoiceLines,
         $exchangeRates,
-        string $outputCurrency
+        string $outputCurrency,
+        string $vatNumber = null
     ) /* : CustomerSum[] */
     {
+        $invoiceLines = UseCase::filterByVatNumber($vatNumber, $invoiceLines);
+
         $sumPerCustomer = [];
         foreach ($invoiceLines as $invoice) {
             $invoiceLineSum = UseCase::calculateInvoiceLine(
@@ -54,5 +57,20 @@ class UseCase
         }
 
         $sumPerCustomer[$invoice->customer]->addToDocumentSum($parentDocument, $invoiceLineSum);
+    }
+
+    private static function filterByVatNumber(?string $vatNumber, $invoiceLines)
+    {
+        if (is_null($vatNumber)) {
+            return $invoiceLines;
+        }
+
+        $filteredInvoiceLines = [];
+        foreach ($invoiceLines as $line) {
+            if ($line->vatNumber === $vatNumber) {
+                array_push($filteredInvoiceLines, $line);
+            }
+        }
+        return $filteredInvoiceLines;
     }
 }
