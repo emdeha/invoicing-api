@@ -1,0 +1,88 @@
+openapi: 3.0.0
+
+info:
+  title: Invocing API
+  description: API for processing invoicing data.
+  version: 0.1.0
+servers:
+  - url: http://localhost:1337
+    description: Local server for development
+paths:
+  /api/invoices/calculate:
+    post:
+      summary: Calculates invoice data.
+      description:
+        Provided a CSV, list of exchange rates and an output
+        currency, calculate invoice data.
+      operationId: invoices_calculate
+      responses:
+        200:
+          description: The request has succeeded.
+          content:
+            application/json:
+                  schema:
+                    $ref: "#/components/schemas/InvoiceCalculationsSet"
+        400:
+          description: Validation failed for the data.
+      requestBody:
+        description: Invoice calculation request.
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/InvoiceCalculationRequest"
+components:
+  schemas:
+    InvoiceCalculationsSet:
+      description: A successfull calculation of invoices.
+      type: array
+      uniqueItems: true
+      items:
+        $ref: "#/components/schemas/InvoiceCalculation"
+    InvoiceCalculation:
+      description: A single invoice calculation.
+      type: object
+      properties:
+        customer:
+          type: string
+          description: The name of the customer.
+        documentSums:
+          type: array
+          description: The sum per invoice, in the output currency.
+          uniqueItems: true
+          items:
+            type: object
+            properties:
+              documentNumber:
+                type: string
+                description: The number of the invoice for which we do the sum.
+              sum:
+                type: integer
+                description: The sum for this invoice
+    InvoiceCalculationRequest:
+      description: Request for an invoice calculation.
+      type: object
+      properties:
+        currencyData:
+          description: Currency data for invoice calculation.
+          type: object
+          properties:
+            exchangeRates:
+              type: array
+              description: The exchange rates data.
+              uniqueItems: true
+              items:
+                type: object
+                properties:
+                  currency:
+                    type: string
+                    description: The currency.
+                  rate:
+                    type: integer
+                    description: The exchange rate.
+            outputCurrency:
+              type: string
+              description: The currency in which we'd like to output the calculation.
+        csvFile:
+          description: CSV file with the invoice data.
+          type: string
+          format: text

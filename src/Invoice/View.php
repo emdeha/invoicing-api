@@ -19,7 +19,7 @@ class View
 
     public function registerHandlers()
     {
-        $this->handler->post('/', array($this, 'sumInvoicesHandler'));
+        $this->handler->post('/api/invoices/calculate', array($this, 'sumInvoicesHandler'));
     }
 
     public function sumInvoicesHandler(Request $request, Response $response, $args)

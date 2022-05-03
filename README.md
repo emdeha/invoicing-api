@@ -15,7 +15,7 @@ invoice.
 ```
 $ curl -F 'csvFile=@tests/data/sample.csv' \
     -F "currencyData=@tests/data/requestBody.json;type=application/json" \
-   http://localhost:1337
+   http://localhost:1337/api/invoices/calculate
 ```
 
-7. (optional) Install [phpdbg](https://www.php.net/manual/en/intro.phpdbg.php) to run the test coverage checks;
+7. (optional) Install [phpdbg](https://www.php.net/manual/en/intro.phpdbg.php) to run the test coverage checks.
