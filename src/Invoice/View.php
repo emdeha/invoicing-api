@@ -27,7 +27,9 @@ class View
         $uploadFiles = $request->getUploadedFiles();
         $dataFile = $uploadFiles['data'];
 
-        $response->getBody()->write("The file is {$dataFile->getSize()} big.");
+        $invoiceLines = CsvParser::parseToInvoiceLines($dataFile->getStream());
+
+        $response->getBody()->write(var_dump($invoiceLines) . "\n");
         return $response;
     }
 }
