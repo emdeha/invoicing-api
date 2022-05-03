@@ -19,20 +19,13 @@ class UseCase
                 $exchangeRates,
                 $outputCurrency
             );
-            $parentDocument = $invoice->parentDocument ?: $invoice->documentNumber;
-
-            if (empty($sumPerCustomer[$invoice->customer])) {
-                $sumPerCustomer[$invoice->customer] = new CustomerSum($invoice->customer);
-            }
-
-            $sumPerCustomer[$invoice->customer]->addToDocumentSum($parentDocument, $invoiceLineSum);
+            UseCase::addDocumentToSumPerCustomer($sumPerCustomer, $invoice, $invoiceLineSum);
         }
 
-        $customerSums = [];
-        foreach ($sumPerCustomer as $customerSum) {
+        $customerSums = array_values($sumPerCustomer);
+        foreach ($customerSums as $customerSum) {
             $customerSum->convertDocumentSumsToOutputRate($outputCurrency, $exchangeRates);
             $customerSum->roundDocumentSums();
-            array_push($customerSums, $customerSum);
         }
 
         return $customerSums;
@@ -47,5 +40,19 @@ class UseCase
         $rateForCurrency = ExchangeRate::getRateForCurrency($invoiceLine->currency, $exchangeRates);
 
         return $invoiceLine->total * $rateForCurrency * $sign;
+    }
+
+    private static function addDocumentToSumPerCustomer(
+        &$sumPerCustomer,
+        InvoiceLine $invoice,
+        float $invoiceLineSum
+    ): void {
+        $parentDocument = $invoice->parentDocument ?: $invoice->documentNumber;
+
+        if (empty($sumPerCustomer[$invoice->customer])) {
+            $sumPerCustomer[$invoice->customer] = new CustomerSum($invoice->customer);
+        }
+
+        $sumPerCustomer[$invoice->customer]->addToDocumentSum($parentDocument, $invoiceLineSum);
     }
 }
