@@ -65,12 +65,12 @@ final class SumInvoicesTest extends TestCase
         $this->assertCount(3, $sum);
 
         $this->assertEquals($sum[0]->customer, "Vendor 1");
-        $this->assertEquals($sum[0]->sum, 2006.61);
+        $this->assertEquals($sum[0]->sum, 2208.09);
 
-        $this->assertEquals($sum[0]->customer, "Vendor 2");
-        $this->assertEquals($sum[0]->sum, 800.23);
+        $this->assertEquals($sum[1]->customer, "Vendor 2");
+        $this->assertEquals($sum[1]->sum, 800.23);
 
-        $this->assertEquals($sum[0]->customer, "Vendor 3");
-        $this->assertEquals($sum[0]->sum, 1413.90);
+        $this->assertEquals($sum[2]->customer, "Vendor 3");
+        $this->assertEquals($sum[2]->sum, 1413.90);
     }
 }

@@ -26,6 +26,8 @@ class UseCase
 
         $customerSums = [];
         foreach ($sumPerCustomer as $customer => $sum) {
+            $sum /= ExchangeRate::getRateForCurrency($outputCurrency, $exchangeRates);
+            $sum = round($sum, 2);
             array_push($customerSums, new CustomerSum($customer, $sum));
         }
 
@@ -36,7 +38,10 @@ class UseCase
         InvoiceLine $invoiceLine,
         $exchangeRates,
         string $outputCurrency
-    ): int {
-        return $invoiceLine->total;
+    ): float {
+        $sign = $invoiceLine->type === TYPE_CREDIT ? -1 : 1;
+        $rateForCurrency = ExchangeRate::getRateForCurrency($invoiceLine->currency, $exchangeRates);
+
+        return $invoiceLine->total * $rateForCurrency * $sign;
     }
 }

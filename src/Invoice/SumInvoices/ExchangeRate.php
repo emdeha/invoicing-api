@@ -14,4 +14,14 @@ class ExchangeRate
         $this->currency = $currency;
         $this->rate = $rate;
     }
+
+    public static function getRateForCurrency(string $currency, $exchangeRates): float
+    {
+        // TODO: Validate whether the currency exists
+        foreach ($exchangeRates as $rate) {
+            if ($rate->currency === $currency) {
+                return $rate->rate;
+            }
+        }
+    }
 }

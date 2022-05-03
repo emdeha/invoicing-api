@@ -7,9 +7,9 @@ namespace InvoicingAPI\Invoice\SumInvoices;
 class CustomerSum
 {
     public string $customer;
-    public int $sum;
+    public float $sum;
 
-    public function __construct(string $customer, int $sum)
+    public function __construct(string $customer, float $sum)
     {
         $this->customer = $customer;
         $this->sum = $sum;
