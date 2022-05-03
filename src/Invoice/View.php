@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace InvoicingAPI\Invoice;
 
 use Psr\Http\Message\ResponseInterface as Response;
@@ -17,12 +19,15 @@ class View
 
     public function registerHandlers()
     {
-        $this->handler->post('/', function (Request $request, Response $response, $args) {
-            $uploadFiles = $request->getUploadedFiles();
-            $dataFile = $uploadFiles['data'];
+        $this->handler->post('/', sumInvoicesHandler);
+    }
 
-            $response->getBody()->write("The file is {$dataFile->getSize()} big.");
-            return $response;
-        });
+    private function sumInvoicesHandler(Request $request, Response $response, $args)
+    {
+        $uploadFiles = $request->getUploadedFiles();
+        $dataFile = $uploadFiles['data'];
+
+        $response->getBody()->write("The file is {$dataFile->getSize()} big.");
+        return $response;
     }
 }
