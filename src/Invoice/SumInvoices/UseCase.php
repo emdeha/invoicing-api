@@ -15,6 +15,8 @@ class UseCase
     {
         $invoiceLines = UseCase::filterByVatNumber($vatNumber, $invoiceLines);
 
+        UseCase::validateParentsExist($invoiceLines);
+
         $sumPerCustomer = [];
         foreach ($invoiceLines as $invoice) {
             $invoiceLineSum = UseCase::calculateInvoiceLine(
@@ -47,16 +49,18 @@ class UseCase
 
     private static function addDocumentToSumPerCustomer(
         &$sumPerCustomer,
-        InvoiceLine $invoice,
+        InvoiceLine $invoiceLine,
         float $invoiceLineSum
     ): void {
-        $parentDocument = $invoice->parentDocument ?: $invoice->documentNumber;
+        $parentDocument = $invoiceLine->type === TYPE_INVOICE
+            ? $invoiceLine->documentNumber
+            : $invoiceLine->parentDocument;
 
-        if (empty($sumPerCustomer[$invoice->customer])) {
-            $sumPerCustomer[$invoice->customer] = new CustomerSum($invoice->customer);
+        if (empty($sumPerCustomer[$invoiceLine->customer])) {
+            $sumPerCustomer[$invoiceLine->customer] = new CustomerSum($invoiceLine->customer);
         }
 
-        $sumPerCustomer[$invoice->customer]->addToDocumentSum($parentDocument, $invoiceLineSum);
+        $sumPerCustomer[$invoiceLine->customer]->addToDocumentSum($parentDocument, $invoiceLineSum);
     }
 
     private static function filterByVatNumber(?string $vatNumber, $invoiceLines)
@@ -72,5 +76,22 @@ class UseCase
             }
         }
         return $filteredInvoiceLines;
+    }
+
+    private static function validateParentsExist($invoiceLines): void
+    {
+        $parentDocumentNumbers = [];
+        foreach ($invoiceLines as $line) {
+            if ($line->type === TYPE_INVOICE) {
+                $parentDocumentNumbers[$line->documentNumber] = true;
+            }
+        }
+
+        foreach ($invoiceLines as $line) {
+            if ($line->type !== TYPE_INVOICE &&
+                empty($parentDocumentNumbers[$line->parentDocument])) {
+                throw new MissingParentException();
+            }
+        }
     }
 }

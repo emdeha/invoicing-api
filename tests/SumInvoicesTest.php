@@ -19,8 +19,6 @@ final class SumInvoicesTest extends TestCase
     /*
      * TODO:
      *  * test whether the currency is valid
-     *  * test currency calculation
-     *  * test missing parent
      *  * validate vat and document number
      */
     public function testSumsOneInvoice(): void
@@ -114,5 +112,24 @@ final class SumInvoicesTest extends TestCase
         $this->assertEquals($vendorOne->documentSums[0]->sum, 385.76);
         $this->assertEquals($vendorOne->documentSums[1]->documentNumber, "1000000264");
         $this->assertEquals($vendorOne->documentSums[1]->sum, 1822.32);
+    }
+
+    public function testMissingParent(): void
+    {
+        $invoiceList = [
+            new SumInvoices\InvoiceLine("Vendor 2", "987654321", "1000000258", 1, "", "EUR", 900),
+            new SumInvoices\InvoiceLine("Vendor 3", "123465123", "1000000259", 1, "", "GBP", 1300),
+            new SumInvoices\InvoiceLine("Vendor 1", "123456789", "1000000260", 2, "1000000257", "EUR", 100),
+            new SumInvoices\InvoiceLine("Vendor 1", "123456789", "1000000261", 3, "1000000257", "GBP", 50),
+        ];
+        $currencyList = [
+            new SumInvoices\ExchangeRate("EUR", 1),
+            new SumInvoices\ExchangeRate("USD", 0.987),
+            new SumInvoices\ExchangeRate("GBP", 0.878)
+        ];
+        $outputCurrency = "GBP";
+
+        $this->expectException(SumInvoices\MissingParentException::class);
+        $sum = SumInvoices\UseCase::do($invoiceList, $currencyList, $outputCurrency);
     }
 }
