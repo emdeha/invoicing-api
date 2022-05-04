@@ -51,12 +51,19 @@ class View
             return $this->returnValidationError("Invalid Request", $response);
         }
 
-        $customerSum = $this->useCase->do(
-            $invoiceLines,
-            $exchangeRates,
-            $outputCurrency,
-            $vatNumber
-        );
+        $customerSum = null;
+        try {
+            $customerSum = $this->useCase->do(
+                $invoiceLines,
+                $exchangeRates,
+                $outputCurrency,
+                $vatNumber
+            );
+        } catch (SumInvoices\MissingParentException $ex) {
+            return $this->returnValidationError("Missing Parent", $response);
+        } catch (SumInvoices\MissingCurrencyException $ex) {
+            return $this->returnValidationError("Missing Currency", $response);
+        }
 
         $response->getBody()->write(json_encode($customerSum) . "\n");
 
