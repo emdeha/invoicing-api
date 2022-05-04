@@ -95,3 +95,11 @@ class UseCase
         }
     }
 }
+
+class MissingParentException extends \Exception
+{
+};
+
+class MissingCurrencyException extends \Exception
+{
+};
