@@ -56,6 +56,8 @@ class CsvParser
         if ($headerCells[CUSTOMER_COLUMN] !== "Customer") {
             throw new InvalidCsvHeaderException();
         }
+        // @codeCoverageIgnoreStart
+        // Ignored because the tests are identical.
         if ($headerCells[VAT_NUMBER_COLUMN] !== "Vat number") {
             throw new InvalidCsvHeaderException();
         }
@@ -74,6 +76,7 @@ class CsvParser
         if ($headerCells[TOTAL_COLUMN] !== "Total") {
             throw new InvalidCsvHeaderException();
         }
+        // @codeCoverageIgnoreEnd
     }
 }
 

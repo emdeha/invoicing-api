@@ -10,4 +10,4 @@ test:
 	./vendor/bin/phpunit tests
 
 cover:
-	phpdbg -qrr ./vendor/bin/phpunit --coverage-text tests
+	phpdbg -qrr ./vendor/bin/phpunit --coverage-html tests/coverage-report tests

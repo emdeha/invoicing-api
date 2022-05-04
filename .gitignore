@@ -1,3 +1,5 @@
 /vendor/
 .php-cs-fixer.cache
 TODO.txt
+tests/coverage-report
+.phpunit.cache
