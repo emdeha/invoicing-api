@@ -6,7 +6,7 @@ namespace InvoicingAPI\Invoice\SumInvoices;
 
 class UseCase
 {
-    public static function do(
+    public function do(
         $invoiceLines,
         $exchangeRates,
         string $outputCurrency,

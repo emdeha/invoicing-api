@@ -11,10 +11,12 @@ use Psr\Http\Server\RequestHandlerInterface as RequestHandlerInterface;
 class View
 {
     private $handler;
+    private $useCase;
 
-    public function __construct(RequestHandlerInterface $handler)
+    public function __construct(RequestHandlerInterface $handler, SumInvoices\UseCase $useCase)
     {
         $this->handler = $handler;
+        $this->useCase = $useCase;
     }
 
     public function registerHandlers()
@@ -25,16 +27,31 @@ class View
     public function sumInvoicesHandler(Request $request, Response $response, $args)
     {
         $csvFile = $request->getUploadedFiles()['csvFile'];
-        $invoiceLines = CsvParser::parseToInvoiceLines($csvFile->getStream()->detach());
+        $invoiceLines = [];
+        try {
+            $invoiceLines = CsvParser::parseToInvoiceLines($csvFile->getStream()->detach());
+        } catch (InvalidCsvValueException $ex) {
+            $this->returnValidationError("Invalid Csv Value", $response);
+        } catch (InvalidCsvHeaderException $ex) {
+            $this->returnValidationError("Invalid Csv Header", $response);
+        }
 
         $currencyData = $request->getUploadedFiles()['currencyData']->getStream()->__toString();
         $requestData = json_decode($currencyData);
 
-        $exchangeRates = View::getExchangeRatesFromCurrencyData($requestData);
-        $outputCurrency = View::getOutputCurrencyFromCurrencyData($requestData);
-        $vatNumber = View::getVatNumberFromCurrencyData($requestData);
+        $exchangeRates = [];
+        $outputCurrency = "";
+        $vatNumber = null;
 
-        $customerSum = SumInvoices\UseCase::do(
+        try {
+            $exchangeRates = View::getExchangeRatesFromCurrencyData($requestData);
+            $outputCurrency = View::getOutputCurrencyFromCurrencyData($requestData);
+            $vatNumber = View::getVatNumberFromCurrencyData($requestData);
+        } catch (InvalidRequestException $ex) {
+            return $this->returnValidationError("Invalid Request", $response);
+        }
+
+        $customerSum = $this->useCase->do(
             $invoiceLines,
             $exchangeRates,
             $outputCurrency,
@@ -43,6 +60,16 @@ class View
 
         $response->getBody()->write(json_encode($customerSum) . "\n");
 
+        return $response
+            ->withHeader('Content-Type', 'application/json');
+    }
+
+    private function returnValidationError(string $errorString, Response &$response)
+    {
+        $response
+            ->withStatus(400)
+            ->withHeader('content-type', 'application/json')
+            ->getBody()->write("{\"error\": $errorString}");
         return $response;
     }
 

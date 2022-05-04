@@ -8,11 +8,13 @@ use PHPUnit\Framework\TestCase;
 
 final class SumInvoicesTest extends TestCase
 {
+    private $sumInvoices;
+
     public function testDoesNothingWithoutInvoices(): void
     {
         $this->assertCount(
             0,
-            SumInvoices\UseCase::do([], [], "USD"),
+            $this->sumInvoices->do([], [], "USD"),
         );
     }
 
@@ -26,7 +28,7 @@ final class SumInvoicesTest extends TestCase
         ];
         $outputCurrency = "USD";
 
-        $sum = SumInvoices\UseCase::do($invoiceList, $currencyList, $outputCurrency);
+        $sum = $this->sumInvoices->do($invoiceList, $currencyList, $outputCurrency);
         $this->assertCount(1, $sum);
 
         $this->assertEquals($sum[0]->customer, "Vendor 1");
@@ -53,7 +55,7 @@ final class SumInvoicesTest extends TestCase
         ];
         $outputCurrency = "GBP";
 
-        $sum = SumInvoices\UseCase::do($invoiceList, $currencyList, $outputCurrency);
+        $sum = $this->sumInvoices->do($invoiceList, $currencyList, $outputCurrency);
         $this->assertCount(3, $sum);
 
         $vendorOne = $sum[0];
@@ -97,7 +99,7 @@ final class SumInvoicesTest extends TestCase
         $outputCurrency = "GBP";
         $vatNumber = "123456789";
 
-        $sum = SumInvoices\UseCase::do($invoiceList, $currencyList, $outputCurrency, $vatNumber);
+        $sum = $this->sumInvoices->do($invoiceList, $currencyList, $outputCurrency, $vatNumber);
         $this->assertCount(1, $sum);
 
         $vendorOne = $sum[0];
@@ -125,7 +127,7 @@ final class SumInvoicesTest extends TestCase
         $outputCurrency = "GBP";
 
         $this->expectException(SumInvoices\MissingParentException::class);
-        $sum = SumInvoices\UseCase::do($invoiceList, $currencyList, $outputCurrency);
+        $sum = $this->sumInvoices->do($invoiceList, $currencyList, $outputCurrency);
     }
 
     public function testMissingCurrency(): void
@@ -143,6 +145,11 @@ final class SumInvoicesTest extends TestCase
         $outputCurrency = "GBP";
 
         $this->expectException(SumInvoices\MissingCurrencyException::class);
-        $sum = SumInvoices\UseCase::do($invoiceList, $currencyList, $outputCurrency);
+        $sum = $this->sumInvoices->do($invoiceList, $currencyList, $outputCurrency);
+    }
+
+    protected function setUp(): void
+    {
+        $this->sumInvoices = new SumInvoices\UseCase();
     }
 }
