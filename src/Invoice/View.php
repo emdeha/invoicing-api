@@ -12,11 +12,17 @@ class View
 {
     private $handler;
     private $useCase;
+    private $tracer;
 
-    public function __construct(RequestHandlerInterface $handler, SumInvoices\UseCase $useCase)
+    public function __construct(
+        RequestHandlerInterface $handler,
+        SumInvoices\UseCase $useCase,
+        $tracer
+    )
     {
         $this->handler = $handler;
         $this->useCase = $useCase;
+        $this->tracer = $tracer;
     }
 
     public function registerHandlers()
@@ -26,6 +32,8 @@ class View
 
     public function sumInvoicesHandler(Request $request, Response $response, $args)
     {
+        $scope = $this->tracer->startActiveSpan('sumInvoicesHandler');
+
         $csvFile = $request->getUploadedFiles()['csvFile'];
         $invoiceLines = [];
         try {
@@ -66,6 +74,8 @@ class View
         }
 
         $response->getBody()->write(json_encode($customerSum) . "\n");
+
+        $scope->close();
 
         return $response
             ->withHeader('Content-Type', 'application/json');
