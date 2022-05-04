@@ -24,6 +24,6 @@ $ curl -F 'csvFile=@tests/data/sample.csv' \
 
 * `make lint` to run the linter and fix errors;
 * `make run` to run the app in development mode;
-* `make test` to runthe tests;
-* `make cover` to extract coverage statistics. The generate html coverage is
+* `make test` to run the tests;
+* `make cover` to extract coverage statistics. The generated html coverage is
 located at `tests/coverage-report`.
