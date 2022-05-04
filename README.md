@@ -19,3 +19,11 @@ $ curl -F 'csvFile=@tests/data/sample.csv' \
 ```
 
 7. (optional) Install [phpdbg](https://www.php.net/manual/en/intro.phpdbg.php) to run the test coverage checks.
+
+## Useful commands
+
+* `make lint` to run the linter and fix errors;
+* `make run` to run the app in development mode;
+* `make test` to runthe tests;
+* `make cover` to extract coverage statistics. The generate html coverage is
+located at `tests/coverage-report`.
