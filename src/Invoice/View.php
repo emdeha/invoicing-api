@@ -32,7 +32,7 @@ class View
         $this->handler->post('/api/invoices/calculate', array($this, 'sumInvoicesHandler'));
     }
 
-    public function sumInvoicesHandler(Request $request, Response $response): Response
+    public function sumInvoicesHandler(Request $request, Response $response)
     {
         $scope = $this->tracer->startActiveSpan('sumInvoicesHandler');
 
@@ -89,9 +89,9 @@ class View
     /**
      * @throws InvalidRequestException
      */
-    private static function getExchangeRatesFromCurrencyData($requestData): array
+    private static function getExchangeRatesFromCurrencyData(object $requestData): array
     {
-        if (!array_key_exists('exchangeRates', $requestData)) {
+        if (!property_exists($requestData, 'exchangeRates')) {
             throw new InvalidRequestException();
         }
 
@@ -105,18 +105,18 @@ class View
     /**
      * @throws InvalidRequestException
      */
-    private static function getOutputCurrencyFromCurrencyData($requestData)
+    private static function getOutputCurrencyFromCurrencyData(object $requestData)
     {
-        if (!array_key_exists('outputCurrency', $requestData)) {
+        if (!property_exists($requestData, 'outputCurrency')) {
             throw new InvalidRequestException();
         }
 
         return $requestData->outputCurrency;
     }
 
-    private static function getVatNumberFromCurrencyData($requestData)
+    private static function getVatNumberFromCurrencyData(object $requestData)
     {
-        if (!array_key_exists('vatNumber', $requestData)) {
+        if (!property_exists($requestData, 'vatNumber')) {
             return null;
         }
 

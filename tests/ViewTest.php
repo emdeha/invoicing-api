@@ -116,7 +116,7 @@ EOD;
 
         return [
             'csvFile' => new class ($stream) {
-                private object $stream;
+                private $stream;
 
                 public function __construct($stream)
                 {
@@ -126,14 +126,14 @@ EOD;
                 public function getStream(): object
                 {
                     return new class ($this->stream) {
-                        private object $stream;
+                        private $stream;
 
                         public function __construct($stream)
                         {
                             $this->stream = $stream;
                         }
 
-                        public function detach(): object
+                        public function detach()
                         {
                             return $this->stream;
                         }
@@ -141,14 +141,14 @@ EOD;
                 }
             },
             'currencyData' => new class ($jsonData) {
-                private object $jsonData;
+                private $jsonData;
 
                 public function __construct($jsonData)
                 {
                     $this->jsonData = $jsonData;
                 }
 
-                public function getStream(): object
+                public function getStream()
                 {
                     return new class ($this->jsonData) {
                         private string $jsonData;
@@ -170,12 +170,10 @@ EOD;
 
     protected function setUp(): void
     {
-        $useCaseReturn = <<<EOD
-[{
-    "customer": "Vendor 1",
-    "documentSums": [{"documentNumber":"1000000257","sum":385.76}]
-}]
-EOD;
+        $useCaseReturn = array(
+            "customer" => "Vendor 1",
+            "documentSums" => array("documentNumber" => "1000000257", "sum" => 385.76)
+        );
 
         $handler = $this->prophesize('Psr\Http\Server\RequestHandlerInterface');
         $useCase = $this->prophesize(SumInvoices\UseCase::class);

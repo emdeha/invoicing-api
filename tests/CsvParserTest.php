@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace InvoicingAPI\Invoice;
 
+use phpDocumentor\Reflection\Types\Resource_;
 use PHPUnit\Framework\TestCase;
 
 final class CsvParserTest extends TestCase
@@ -111,7 +112,7 @@ final class CsvParserTest extends TestCase
         CsvParser::parseToInvoiceLines($stream);
     }
 
-    private static function stringToStream(string $str): bool
+    private static function stringToStream(string $str)
     {
         $stream = fopen('php://memory', 'r+');
         fwrite($stream, $str);
