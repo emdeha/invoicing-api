@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace InvoicingAPI\Invoice;
 
+use Exception;
+
 define("CUSTOMER_COLUMN", 0);
 define("VAT_NUMBER_COLUMN", 1);
 define("DOCUMENT_NUMBER_COLUMN", 2);
@@ -14,12 +16,16 @@ define("TOTAL_COLUMN", 6);
 
 class CsvParser
 {
-    public static function parseToInvoiceLines($csvStream)
+    /**
+     * @throws InvalidCsvHeaderException
+     * @throws InvalidCsvValueException
+     */
+    public static function parseToInvoiceLines($csvStream): array
     {
         $invoiceLines = [];
         $row = 0;
 
-        while (($line = fgetcsv($csvStream, 0, ",")) !== false) {
+        while (($line = fgetcsv($csvStream)) !== false) {
             $row++;
 
             if ($row === 1) {
@@ -34,23 +40,23 @@ class CsvParser
                 throw new InvalidCsvValueException();
             }
 
-            array_push(
-                $invoiceLines,
-                new SumInvoices\InvoiceLine(
-                    $line[CUSTOMER_COLUMN],
-                    $line[VAT_NUMBER_COLUMN],
-                    $line[DOCUMENT_NUMBER_COLUMN],
-                    intval($line[TYPE_COLUMN]),
-                    $line[PARENT_DOCUMENT_COLUMN],
-                    $line[CURRENCY_COLUMN],
-                    intval($line[TOTAL_COLUMN])
-                )
+            $invoiceLines[] = new SumInvoices\InvoiceLine(
+                $line[CUSTOMER_COLUMN],
+                $line[VAT_NUMBER_COLUMN],
+                $line[DOCUMENT_NUMBER_COLUMN],
+                intval($line[TYPE_COLUMN]),
+                $line[PARENT_DOCUMENT_COLUMN],
+                $line[CURRENCY_COLUMN],
+                intval($line[TOTAL_COLUMN])
             );
         }
 
         return $invoiceLines;
     }
 
+    /**
+     * @throws InvalidCsvHeaderException
+     */
     private static function validateCsvHeader($headerCells): void
     {
         if ($headerCells[CUSTOMER_COLUMN] !== "Customer") {
@@ -77,10 +83,10 @@ class CsvParser
     }
 }
 
-class InvalidCsvValueException extends \Exception
+class InvalidCsvValueException extends Exception
 {
-};
+}
 
-class InvalidCsvHeaderException extends \Exception
+class InvalidCsvHeaderException extends Exception
 {
-};
+}

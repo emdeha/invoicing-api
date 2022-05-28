@@ -3,3 +3,4 @@
 TODO.txt
 tests/coverage-report
 .phpunit.cache
+.idea/

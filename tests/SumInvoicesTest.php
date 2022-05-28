@@ -8,8 +8,12 @@ use PHPUnit\Framework\TestCase;
 
 final class SumInvoicesTest extends TestCase
 {
-    private $sumInvoices;
+    private SumInvoices\UseCase $sumInvoices;
 
+    /**
+     * @throws SumInvoices\MissingParentException
+     * @throws SumInvoices\MissingCurrencyException
+     */
     public function testDoesNothingWithoutInvoices(): void
     {
         $this->assertCount(
@@ -18,6 +22,10 @@ final class SumInvoicesTest extends TestCase
         );
     }
 
+    /**
+     * @throws SumInvoices\MissingParentException
+     * @throws SumInvoices\MissingCurrencyException
+     */
     public function testSumsOneInvoice(): void
     {
         $invoiceList = [
@@ -31,11 +39,15 @@ final class SumInvoicesTest extends TestCase
         $sum = $this->sumInvoices->do($invoiceList, $currencyList, $outputCurrency);
         $this->assertCount(1, $sum);
 
-        $this->assertEquals($sum[0]->customer, "Vendor 1");
-        $this->assertEquals($sum[0]->documentSums[0]->documentNumber, "1000000257");
-        $this->assertEquals($sum[0]->documentSums[0]->sum, 400);
+        $this->assertEquals("Vendor 1", $sum[0]->customer);
+        $this->assertEquals("1000000257", $sum[0]->documentSums[0]->documentNumber);
+        $this->assertEquals(400, $sum[0]->documentSums[0]->sum);
     }
 
+    /**
+     * @throws SumInvoices\MissingParentException
+     * @throws SumInvoices\MissingCurrencyException
+     */
     public function testSumsManyInvoices(): void
     {
         $invoiceList = [
@@ -59,26 +71,30 @@ final class SumInvoicesTest extends TestCase
         $this->assertCount(3, $sum);
 
         $vendorOne = $sum[0];
-        $this->assertEquals($vendorOne->customer, "Vendor 1");
+        $this->assertEquals("Vendor 1", $vendorOne->customer);
         $this->assertCount(2, $vendorOne->documentSums);
-        $this->assertEquals($vendorOne->documentSums[0]->documentNumber, "1000000257");
-        $this->assertEquals($vendorOne->documentSums[0]->sum, 385.76);
-        $this->assertEquals($vendorOne->documentSums[1]->documentNumber, "1000000264");
-        $this->assertEquals($vendorOne->documentSums[1]->sum, 1822.32);
+        $this->assertEquals("1000000257", $vendorOne->documentSums[0]->documentNumber);
+        $this->assertEquals(385.76, $vendorOne->documentSums[0]->sum);
+        $this->assertEquals("1000000264", $vendorOne->documentSums[1]->documentNumber);
+        $this->assertEquals(1822.32, $vendorOne->documentSums[1]->sum);
 
         $vendorTwo = $sum[1];
-        $this->assertEquals($vendorTwo->customer, "Vendor 2");
+        $this->assertEquals("Vendor 2", $vendorTwo->customer);
         $this->assertCount(1, $vendorTwo->documentSums);
-        $this->assertEquals($vendorTwo->documentSums[0]->documentNumber, "1000000258");
-        $this->assertEquals($vendorTwo->documentSums[0]->sum, 800.23);
+        $this->assertEquals("1000000258", $vendorTwo->documentSums[0]->documentNumber);
+        $this->assertEquals(800.23, $vendorTwo->documentSums[0]->sum);
 
         $vendorThree = $sum[2];
         $this->assertCount(1, $vendorThree->documentSums);
-        $this->assertEquals($vendorThree->customer, "Vendor 3");
-        $this->assertEquals($vendorThree->documentSums[0]->documentNumber, "1000000259");
-        $this->assertEquals($vendorThree->documentSums[0]->sum, 1413.90);
+        $this->assertEquals("Vendor 3", $vendorThree->customer);
+        $this->assertEquals("1000000259", $vendorThree->documentSums[0]->documentNumber);
+        $this->assertEquals(1413.90, $vendorThree->documentSums[0]->sum);
     }
 
+    /**
+     * @throws SumInvoices\MissingParentException
+     * @throws SumInvoices\MissingCurrencyException
+     */
     public function testFilteringByVATNumber(): void
     {
         $invoiceList = [
@@ -103,14 +119,17 @@ final class SumInvoicesTest extends TestCase
         $this->assertCount(1, $sum);
 
         $vendorOne = $sum[0];
-        $this->assertEquals($vendorOne->customer, "Vendor 1");
+        $this->assertEquals("Vendor 1", $vendorOne->customer);
         $this->assertCount(2, $vendorOne->documentSums);
-        $this->assertEquals($vendorOne->documentSums[0]->documentNumber, "1000000257");
-        $this->assertEquals($vendorOne->documentSums[0]->sum, 385.76);
-        $this->assertEquals($vendorOne->documentSums[1]->documentNumber, "1000000264");
-        $this->assertEquals($vendorOne->documentSums[1]->sum, 1822.32);
+        $this->assertEquals("1000000257", $vendorOne->documentSums[0]->documentNumber);
+        $this->assertEquals(385.76, $vendorOne->documentSums[0]->sum);
+        $this->assertEquals("1000000264", $vendorOne->documentSums[1]->documentNumber);
+        $this->assertEquals(1822.32, $vendorOne->documentSums[1]->sum);
     }
 
+    /**
+     * @throws SumInvoices\MissingCurrencyException
+     */
     public function testMissingParent(): void
     {
         $invoiceList = [
@@ -127,9 +146,12 @@ final class SumInvoicesTest extends TestCase
         $outputCurrency = "GBP";
 
         $this->expectException(SumInvoices\MissingParentException::class);
-        $sum = $this->sumInvoices->do($invoiceList, $currencyList, $outputCurrency);
+        $this->sumInvoices->do($invoiceList, $currencyList, $outputCurrency);
     }
 
+    /**
+     * @throws SumInvoices\MissingParentException
+     */
     public function testMissingCurrency(): void
     {
         $invoiceList = [
@@ -145,7 +167,7 @@ final class SumInvoicesTest extends TestCase
         $outputCurrency = "GBP";
 
         $this->expectException(SumInvoices\MissingCurrencyException::class);
-        $sum = $this->sumInvoices->do($invoiceList, $currencyList, $outputCurrency);
+        $this->sumInvoices->do($invoiceList, $currencyList, $outputCurrency);
     }
 
     protected function setUp(): void

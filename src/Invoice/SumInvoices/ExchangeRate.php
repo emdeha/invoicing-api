@@ -15,6 +15,9 @@ class ExchangeRate
         $this->rate = $rate;
     }
 
+    /**
+     * @throws MissingCurrencyException
+     */
     public static function getRateForCurrency(string $currency, $exchangeRates): float
     {
         foreach ($exchangeRates as $rate) {

@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace InvoicingAPI\Invoice;
 
+use JetBrains\PhpStorm\ArrayShape;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Prophecy\Argument;
+use OpenTracing\GlobalTracer;
 
 final class ViewTest extends TestCase
 {
     use ProphecyTrait;
 
-    private $view;
+    private View $view;
 
     public function testHandleRequest(): void
     {
@@ -38,7 +40,7 @@ EOD;
         $response->getBody()->willReturn($stream)->shouldBeCalled();
         $response->withHeader('Content-Type', 'application/json')->shouldBeCalled();
 
-        $this->view->sumInvoicesHandler($request->reveal(), $response->reveal(), []);
+        $this->view->sumInvoicesHandler($request->reveal(), $response->reveal());
     }
 
     public function testMissingExchangeRate(): void
@@ -68,7 +70,7 @@ EOD;
             ->getBody()
             ->willReturn($stream);
 
-        $this->view->sumInvoicesHandler($request->reveal(), $response->reveal(), []);
+        $this->view->sumInvoicesHandler($request->reveal(), $response->reveal());
     }
 
     public function testMissingOutputCurrency(): void
@@ -102,10 +104,11 @@ EOD;
             ->getBody()
             ->willReturn($stream);
 
-        $this->view->sumInvoicesHandler($request->reveal(), $response->reveal(), []);
+        $this->view->sumInvoicesHandler($request->reveal(), $response->reveal());
     }
 
-    private static function uploadedFilesToStream(string $csvData, string $jsonData)
+    #[ArrayShape(['csvFile' => "__anonymous@3611", 'currencyData' => "__anonymous@4365"])]
+    private static function uploadedFilesToStream(string $csvData, string $jsonData): array
     {
         $stream = fopen('php://memory', 'r+');
         fwrite($stream, $csvData);
@@ -113,24 +116,24 @@ EOD;
 
         return [
             'csvFile' => new class ($stream) {
-                private $stream;
+                private object $stream;
 
                 public function __construct($stream)
                 {
                     $this->stream = $stream;
                 }
 
-                public function getStream()
+                public function getStream(): object
                 {
                     return new class ($this->stream) {
-                        private $stream;
+                        private object $stream;
 
                         public function __construct($stream)
                         {
                             $this->stream = $stream;
                         }
 
-                        public function detach()
+                        public function detach(): object
                         {
                             return $this->stream;
                         }
@@ -138,24 +141,24 @@ EOD;
                 }
             },
             'currencyData' => new class ($jsonData) {
-                private $jsonData;
+                private object $jsonData;
 
                 public function __construct($jsonData)
                 {
                     $this->jsonData = $jsonData;
                 }
 
-                public function getStream()
+                public function getStream(): object
                 {
                     return new class ($this->jsonData) {
-                        private $jsonData;
+                        private string $jsonData;
 
                         public function __construct($jsonData)
                         {
                             $this->jsonData = $jsonData;
                         }
 
-                        public function __toString()
+                        public function __toString(): string
                         {
                             return $this->jsonData;
                         }
@@ -181,6 +184,6 @@ EOD;
             ->do(Argument::cetera())
             ->willReturn($useCaseReturn);
 
-        $this->view = new View($handler->reveal(), $useCase->reveal());
+        $this->view = new View($handler->reveal(), $useCase->reveal(), GlobalTracer::get());
     }
 }
