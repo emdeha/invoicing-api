@@ -7,7 +7,7 @@ namespace InvoicingAPI\Invoice\SumInvoices;
 class CustomerSum
 {
     public string $customer;
-    public $documentSums; /* DocumentSum[] */
+    public array $documentSums;
 
     public function __construct(string $customer)
     {
@@ -24,9 +24,12 @@ class CustomerSum
             }
         }
 
-        array_push($this->documentSums, new DocumentSum($documentNumber, $invoiceLineSum));
+        $this->documentSums[] = new DocumentSum($documentNumber, $invoiceLineSum);
     }
 
+    /**
+     * @throws MissingCurrencyException
+     */
     public function convertDocumentSumsToOutputRate(string $outputCurrency, $exchangeRates): void
     {
         foreach ($this->documentSums as $sum) {
@@ -34,7 +37,7 @@ class CustomerSum
         }
     }
 
-    public function roundDocumentSums()
+    public function roundDocumentSums(): void
     {
         foreach ($this->documentSums as $sum) {
             $sum->sum = round($sum->sum, 2);

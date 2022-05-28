@@ -4,14 +4,20 @@ declare(strict_types=1);
 
 namespace InvoicingAPI\Invoice\SumInvoices;
 
+use Exception;
+
 class UseCase
 {
+    /**
+     * @throws MissingParentException
+     * @throws MissingCurrencyException
+     */
     public function do(
         $invoiceLines,
         $exchangeRates,
         string $outputCurrency,
         string $vatNumber = null
-    ) /* : CustomerSum[] */
+    ): array
     {
         $invoiceLines = UseCase::filterByVatNumber($vatNumber, $invoiceLines);
 
@@ -21,8 +27,7 @@ class UseCase
         foreach ($invoiceLines as $invoice) {
             $invoiceLineSum = UseCase::calculateInvoiceLine(
                 $invoice,
-                $exchangeRates,
-                $outputCurrency
+                $exchangeRates
             );
             UseCase::addDocumentToSumPerCustomer($sumPerCustomer, $invoice, $invoiceLineSum);
         }
@@ -36,10 +41,12 @@ class UseCase
         return $customerSums;
     }
 
+    /**
+     * @throws MissingCurrencyException
+     */
     private static function calculateInvoiceLine(
         InvoiceLine $invoiceLine,
-        $exchangeRates,
-        string $outputCurrency
+        $exchangeRates
     ): float {
         $sign = $invoiceLine->type === TYPE_CREDIT ? -1 : 1;
         $rateForCurrency = ExchangeRate::getRateForCurrency($invoiceLine->currency, $exchangeRates);
@@ -72,12 +79,15 @@ class UseCase
         $filteredInvoiceLines = [];
         foreach ($invoiceLines as $line) {
             if ($line->vatNumber === $vatNumber) {
-                array_push($filteredInvoiceLines, $line);
+                $filteredInvoiceLines[] = $line;
             }
         }
         return $filteredInvoiceLines;
     }
 
+    /**
+     * @throws MissingParentException
+     */
     private static function validateParentsExist($invoiceLines): void
     {
         $parentDocumentNumbers = [];
@@ -96,10 +106,10 @@ class UseCase
     }
 }
 
-class MissingParentException extends \Exception
+class MissingParentException extends Exception
 {
-};
+}
 
-class MissingCurrencyException extends \Exception
+class MissingCurrencyException extends Exception
 {
-};
+}

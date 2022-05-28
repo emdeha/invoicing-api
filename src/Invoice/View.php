@@ -4,20 +4,22 @@ declare(strict_types=1);
 
 namespace InvoicingAPI\Invoice;
 
+use Exception;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandlerInterface;
+use OpenTracing;
 
 class View
 {
-    private $handler;
-    private $useCase;
-    private $tracer;
+    private RequestHandlerInterface $handler;
+    private SumInvoices\UseCase $useCase;
+    private OpenTracing\Tracer $tracer;
 
     public function __construct(
         RequestHandlerInterface $handler,
         SumInvoices\UseCase $useCase,
-        $tracer
+        OpenTracing\Tracer $tracer
     )
     {
         $this->handler = $handler;
@@ -25,41 +27,35 @@ class View
         $this->tracer = $tracer;
     }
 
-    public function registerHandlers()
+    public function registerHandlers(): void
     {
         $this->handler->post('/api/invoices/calculate', array($this, 'sumInvoicesHandler'));
     }
 
-    public function sumInvoicesHandler(Request $request, Response $response, $args)
+    public function sumInvoicesHandler(Request $request, Response $response): Response
     {
         $scope = $this->tracer->startActiveSpan('sumInvoicesHandler');
 
         $csvFile = $request->getUploadedFiles()['csvFile'];
-        $invoiceLines = [];
         try {
             $invoiceLines = CsvParser::parseToInvoiceLines($csvFile->getStream()->detach());
-        } catch (InvalidCsvValueException $ex) {
-            $this->returnValidationError("Invalid Csv Value", $response);
-        } catch (InvalidCsvHeaderException $ex) {
-            $this->returnValidationError("Invalid Csv Header", $response);
+        } catch (InvalidCsvValueException) {
+            return $this->returnValidationError("Invalid Csv Value", $response);
+        } catch (InvalidCsvHeaderException) {
+            return $this->returnValidationError("Invalid Csv Header", $response);
         }
 
         $currencyData = $request->getUploadedFiles()['currencyData']->getStream()->__toString();
         $requestData = json_decode($currencyData);
 
-        $exchangeRates = [];
-        $outputCurrency = "";
-        $vatNumber = null;
-
         try {
             $exchangeRates = View::getExchangeRatesFromCurrencyData($requestData);
             $outputCurrency = View::getOutputCurrencyFromCurrencyData($requestData);
             $vatNumber = View::getVatNumberFromCurrencyData($requestData);
-        } catch (InvalidRequestException $ex) {
+        } catch (InvalidRequestException) {
             return $this->returnValidationError("Invalid Request", $response);
         }
 
-        $customerSum = null;
         try {
             $customerSum = $this->useCase->do(
                 $invoiceLines,
@@ -67,9 +63,9 @@ class View
                 $outputCurrency,
                 $vatNumber
             );
-        } catch (SumInvoices\MissingParentException $ex) {
+        } catch (SumInvoices\MissingParentException) {
             return $this->returnValidationError("Missing Parent", $response);
-        } catch (SumInvoices\MissingCurrencyException $ex) {
+        } catch (SumInvoices\MissingCurrencyException) {
             return $this->returnValidationError("Missing Currency", $response);
         }
 
@@ -81,7 +77,7 @@ class View
             ->withHeader('Content-Type', 'application/json');
     }
 
-    private function returnValidationError(string $errorString, Response &$response)
+    private function returnValidationError(string $errorString, Response $response): Response
     {
         $response
             ->withStatus(400)
@@ -90,7 +86,10 @@ class View
         return $response;
     }
 
-    private static function getExchangeRatesFromCurrencyData($requestData)
+    /**
+     * @throws InvalidRequestException
+     */
+    private static function getExchangeRatesFromCurrencyData($requestData): array
     {
         if (!array_key_exists('exchangeRates', $requestData)) {
             throw new InvalidRequestException();
@@ -98,11 +97,14 @@ class View
 
         $exchangeRates = [];
         foreach ($requestData->exchangeRates as $currency => $rate) {
-            array_push($exchangeRates, new SumInvoices\ExchangeRate($currency, $rate));
+            $exchangeRates[] = new SumInvoices\ExchangeRate($currency, $rate);
         }
         return $exchangeRates;
     }
 
+    /**
+     * @throws InvalidRequestException
+     */
     private static function getOutputCurrencyFromCurrencyData($requestData)
     {
         if (!array_key_exists('outputCurrency', $requestData)) {
@@ -122,6 +124,6 @@ class View
     }
 }
 
-class InvalidRequestException extends \Exception
+class InvalidRequestException extends Exception
 {
-};
+}

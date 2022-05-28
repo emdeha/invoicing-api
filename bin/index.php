@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use InvoicingAPI\Invoice\SumInvoices\UseCase;
+use InvoicingAPI\Invoice\View;
 use Selective\BasePath\BasePathMiddleware;
 use Slim\Factory\AppFactory;
 use Jaeger\Config;
@@ -9,22 +11,25 @@ use OpenTracing\GlobalTracer;
 
 require __DIR__ . '/../vendor/autoload.php';
 
-function initializeApp($tracer) {
+function initializeApp($tracer): void {
     $app = AppFactory::create();
 
     $app->addRoutingMiddleware();
 
     $app->add(new BasePathMiddleware($app));
 
-    $sumInvoicesUseCase = new \InvoicingAPI\Invoice\SumInvoices\UseCase();
+    $sumInvoicesUseCase = new UseCase();
 
-    $view = new \InvoicingAPI\Invoice\View($app, $sumInvoicesUseCase, $tracer);
+    $view = new View($app, $sumInvoicesUseCase, $tracer);
     $view->registerHandlers();
 
     $app->run();
 }
 
-function initializeTracing() {
+/**
+ * @throws Exception
+ */
+function initializeTracing(): OpenTracing\Tracer {
     $config = new Config(
         [
             'sampler' => [
@@ -44,7 +49,14 @@ function initializeTracing() {
     return GlobalTracer::get();
 }
 
-$tracer = initializeTracing();
+$tracer = null;
+
+try {
+    $tracer = initializeTracing();
+} catch (Exception $e) {
+    print("Couldn't initialize tracer");
+    exit(1);
+}
 
 initializeApp($tracer);
 

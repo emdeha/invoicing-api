@@ -8,6 +8,10 @@ use PHPUnit\Framework\TestCase;
 
 final class CsvParserTest extends TestCase
 {
+    /**
+     * @throws InvalidCsvHeaderException
+     * @throws InvalidCsvValueException
+     */
     public function testParsesEmptyCsv(): void
     {
         $stream = CsvParserTest::stringToStream("");
@@ -16,6 +20,10 @@ final class CsvParserTest extends TestCase
         $this->assertCount(0, $invoiceLines);
     }
 
+    /**
+     * @throws InvalidCsvHeaderException
+     * @throws InvalidCsvValueException
+     */
     public function testParseOnlyHeader(): void
     {
         $stream = CsvParserTest::stringToStream("Customer,Vat number,Document number,Type," .
@@ -25,6 +33,10 @@ final class CsvParserTest extends TestCase
         $this->assertCount(0, $invoiceLines);
     }
 
+    /**
+     * @throws InvalidCsvHeaderException
+     * @throws InvalidCsvValueException
+     */
     public function testParseOneLine(): void
     {
         $stream = CsvParserTest::stringToStream(
@@ -34,9 +46,12 @@ final class CsvParserTest extends TestCase
 
         $invoiceLines = CsvParser::parseToInvoiceLines($stream);
         $this->assertCount(1, $invoiceLines);
-        $this->assertEquals($invoiceLines[0]->customer, "Vendor 1");
+        $this->assertEquals("Vendor 1", $invoiceLines[0]->customer);
     }
 
+    /**
+     * @throws InvalidCsvHeaderException
+     */
     public function testTypeIsNotInt(): void
     {
         $stream = CsvParserTest::stringToStream(
@@ -45,9 +60,12 @@ final class CsvParserTest extends TestCase
         );
 
         $this->expectException(InvalidCsvValueException::class);
-        $invoiceLines = CsvParser::parseToInvoiceLines($stream);
+        CsvParser::parseToInvoiceLines($stream);
     }
 
+    /**
+     * @throws InvalidCsvHeaderException
+     */
     public function testTotalIsNotInt(): void
     {
         $stream = CsvParserTest::stringToStream(
@@ -56,9 +74,13 @@ final class CsvParserTest extends TestCase
         );
 
         $this->expectException(InvalidCsvValueException::class);
-        $invoiceLines = CsvParser::parseToInvoiceLines($stream);
+        CsvParser::parseToInvoiceLines($stream);
     }
 
+    /**
+     * @throws InvalidCsvHeaderException
+     * @throws InvalidCsvValueException
+     */
     public function testParseManyLines(): void
     {
         $stream = CsvParserTest::stringToStream(
@@ -70,11 +92,14 @@ final class CsvParserTest extends TestCase
 
         $invoiceLines = CsvParser::parseToInvoiceLines($stream);
         $this->assertCount(3, $invoiceLines);
-        $this->assertEquals($invoiceLines[0]->customer, "Vendor 1");
-        $this->assertEquals($invoiceLines[1]->customer, "Vendor 2");
-        $this->assertEquals($invoiceLines[2]->customer, "Vendor 3");
+        $this->assertEquals("Vendor 1", $invoiceLines[0]->customer);
+        $this->assertEquals("Vendor 2", $invoiceLines[1]->customer);
+        $this->assertEquals("Vendor 3", $invoiceLines[2]->customer);
     }
 
+    /**
+     * @throws InvalidCsvValueException
+     */
     public function testValidateHeader(): void
     {
         $stream = CsvParserTest::stringToStream(
@@ -83,10 +108,10 @@ final class CsvParserTest extends TestCase
         );
 
         $this->expectException(InvalidCsvHeaderException::class);
-        $invoiceLines = CsvParser::parseToInvoiceLines($stream);
+        CsvParser::parseToInvoiceLines($stream);
     }
 
-    private static function stringToStream(string $str)
+    private static function stringToStream(string $str): bool
     {
         $stream = fopen('php://memory', 'r+');
         fwrite($stream, $str);
